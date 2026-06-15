@@ -3,11 +3,8 @@ import esphome.config_validation as cv
 
 from esphome.components import remote_base
 
-DEPENDENCIES = ["remote_base"]
-
 
 nikai_ns = cg.esphome_ns.namespace("remote_base")
-
 
 NikaiData = nikai_ns.struct("NikaiData")
 
