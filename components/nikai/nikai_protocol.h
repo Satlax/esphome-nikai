@@ -41,8 +41,7 @@ class NikaiProtocol : public RemoteProtocol<NikaiData> {
 };
 
 
-DECLARE_REMOTE_PROTOCOL(Nikai)
-
+DECLARE_REMOTE_PROTOCOL(Nikai);
 
 
 } // namespace remote_base
