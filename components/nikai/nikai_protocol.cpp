@@ -183,6 +183,12 @@ void NikaiProtocol::dump(
 
 }
 
+#include "esphome/components/remote_base/remote_base.h"
 
-} // namespace remote_base
-} // namespace esphome
+namespace esphome {
+namespace remote_base {
+
+NikaiProtocol nikai_protocol;
+
+}  // namespace remote_base
+}  // namespace esphome
