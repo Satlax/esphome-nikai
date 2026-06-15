@@ -1,28 +1,12 @@
-#include "nikai.h"
-
-#include "esphome/core/log.h"
+#include "nikai_protocol.h"
 
 
 namespace esphome {
-namespace nikai {
+namespace remote_base {
 
 
-static const char *TAG = "nikai";
+NikaiProtocol Nikai_protocol;
 
 
-void NikaiReceiver::setup() {
-
-  ESP_LOGI(TAG, "NIKAI receiver loaded");
-
-}
-
-
-void NikaiReceiver::dump_config() {
-
-  ESP_LOGCONFIG(TAG, "NIKAI receiver");
-
-}
-
-
-}
-}
+} // namespace remote_base
+} // namespace esphome
