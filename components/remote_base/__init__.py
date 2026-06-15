@@ -1,4 +1,3 @@
-from esphome.components.remote_base import *
 CODEOWNERS = ["@Satlax"]
 
 DEPENDENCIES = ["remote_base"]
