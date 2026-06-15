@@ -1,5 +1,5 @@
 #pragma once
-#include "remote_base.h"
+#include "esphome/components/remote_base/remote_base.h"
 
 namespace esphome {
 namespace remote_base {
