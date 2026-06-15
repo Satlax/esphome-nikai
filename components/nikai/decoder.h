@@ -1,22 +1,54 @@
 #pragma once
 
-
-#include "esphome/components/remote_receiver/remote_receiver.h"
+#include "esphome/components/remote_base/remote_base.h"
 
 
 namespace esphome {
-namespace nikai {
+namespace remote_base {
 
 
-class NikaiDecoder
-{
+struct NikaiData {
+  uint32_t data;
+
+  bool operator==(const NikaiData &rhs) const {
+    return data == rhs.data;
+  }
+};
+
+
+class NikaiProtocol : public RemoteProtocol<NikaiData> {
 
  public:
 
-  static bool decode(
-      remote_base::RemoteReceiveData &data,
-      uint32_t *result
-  );
+  void encode(RemoteTransmitData *dst, const NikaiData &data) override;
+
+  optional<NikaiData> decode(RemoteReceiveData data) override;
+
+  void dump(const NikaiData &data) override;
+
+};
+
+
+DECLARE_REMOTE_PROTOCOL(Nikai)
+
+
+template<typename... Ts>
+class NikaiAction : public RemoteTransmitterActionBase<Ts...> {
+
+ public:
+
+  TEMPLATABLE_VALUE(uint32_t, data)
+
+
+  void encode(RemoteTransmitData *dst, Ts... x) override {
+
+    NikaiData d{};
+
+    d.data = this->data_.value(x...);
+
+    NikaiProtocol().encode(dst, d);
+
+  }
 
 };
 
