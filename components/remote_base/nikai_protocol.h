@@ -1,10 +1,13 @@
 #pragma once
 
+#include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/remote_base/remote_base.h"
 
 
 namespace esphome {
 namespace remote_base {
+namespace nikai {
 
 
 struct NikaiData {
