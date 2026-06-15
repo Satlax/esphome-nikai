@@ -1,18 +1,17 @@
 import esphome.codegen as cg
-import esphome.config_validation as cv
 
 from esphome.components import remote_receiver
-from esphome.const import CONF_ID
+
+
+CODEOWNERS = ["@local"]
 
 DEPENDENCIES = ["remote_receiver"]
 
+
 nikai_ns = cg.esphome_ns.namespace("nikai")
 
-NikaiReceiver = nikai_ns.class_(
-    "NikaiReceiver",
+
+NikaiDecoder = nikai_ns.class_(
+    "NikaiDecoder",
     cg.Component
 )
-
-CONFIG_SCHEMA = cv.Schema({
-    cv.GenerateID(): cv.declare_id(NikaiReceiver),
-})
