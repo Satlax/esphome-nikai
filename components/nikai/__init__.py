@@ -1,6 +1,7 @@
 import esphome.config_validation as cv
 import esphome.codegen as cg
 from esphome.components.remote_base import declare_protocol, register_trigger, register_dumper
+from .remote_base import *
 
 CODEOWNERS = ["@Satlax"]
 DEPENDENCIES = ["remote_base"]
