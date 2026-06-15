@@ -1,61 +1,54 @@
 #include "nikai_protocol.h"
-
+#include "esphome/core/log.h"
 
 namespace esphome {
-namespace nikai {
+namespace remote_base {
 
+static const char *TAG = "remote.nikai";
 
-bool NikaiProtocol::decode(
-    remote_base::RemoteReceiveData data
-) {
+static const uint32_t NIKAI_FREQ        = 38000;
+static const uint32_t NIKAI_START_MARK  = 4000;
+static const uint32_t NIKAI_START_SPACE = 4000;
+static const uint32_t NIKAI_BIT_MARK    = 500;
+static const uint32_t NIKAI_ONE_SPACE   = 2000;
+static const uint32_t NIKAI_ZERO_SPACE  = 1000;
+static const uint8_t  NIKAI_BITS        = 24;
 
-  auto timing = data.get_data();
-
-  if (timing.size() < 25)
-    return false;
-
-
-  // NIKAI:
-  // header ~4000/4000
-  // bit0 ~500/1000
-  // bit1 ~500/2000
-
-
-  if (abs(timing[0] - 4000) > 800)
-    return false;
-
-
-  uint32_t value = 0;
-
-
-  for (int i=0;i<24;i++) {
-
-    int idx = 2 + i*2;
-
-    if (idx >= timing.size())
-      return false;
-
-
-    uint32_t bit =
-      timing[idx+1] > 1500;
-
-
-    value <<= 1;
-    value |= bit;
-
+void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
+  dst->set_carrier_frequency(NIKAI_FREQ);
+  dst->item(NIKAI_START_MARK, NIKAI_START_SPACE);
+  for (int i = NIKAI_BITS - 1; i >= 0; i--) {
+    if ((data.data >> i) & 1)
+      dst->item(NIKAI_BIT_MARK, NIKAI_ONE_SPACE);
+    else
+      dst->item(NIKAI_BIT_MARK, NIKAI_ZERO_SPACE);
   }
-
-
-  this->result.protocol = "NIKAI";
-  this->result.address = 0;
-  this->result.command = value & 0xFFFFFF;
-  this->result.data = value;
-
-
-  return true;
-
+  dst->mark(NIKAI_BIT_MARK);
 }
 
+optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
+  NikaiData out{};
+  if (!data.expect_item(NIKAI_START_MARK, NIKAI_START_SPACE))
+    return {};
+  uint32_t value = 0;
+  for (int i = 0; i < NIKAI_BITS; i++) {
+    if (!data.expect_mark(NIKAI_BIT_MARK))
+      return {};
+    if (data.expect_space(NIKAI_ONE_SPACE)) {
+      value = (value << 1) | 1;
+    } else if (data.expect_space(NIKAI_ZERO_SPACE)) {
+      value = (value << 1);
+    } else {
+      return {};
+    }
+  }
+  out.data = value;
+  return out;
+}
 
+void NikaiProtocol::dump(const NikaiData &data) {
+  ESP_LOGI(TAG, "Received Nikai: data=0x%05" PRIX32, data.data);
 }
-}
+
+}  // namespace remote_base
+}  // namespace esphome
