@@ -1,82 +1,107 @@
 #include "nikai.h"
+
 #include "esphome/core/log.h"
+
 
 namespace esphome {
 namespace remote_base {
 
+
 static const char *TAG = "remote.nikai";
 
-static const uint32_t NIKAI_FREQ = 38000;
+
 static const uint32_t START = 4000;
-static const uint32_t MARK = 500;
+
+static const uint32_t BIT_MARK = 500;
+
 static const uint32_t ONE = 2000;
+
 static const uint32_t ZERO = 1000;
 
 
 void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
 
-  dst->set_carrier_frequency(NIKAI_FREQ);
+  dst->set_carrier_frequency(38000);
 
-  dst->item(START, START);
+  dst->item(START,4000);
 
-  for (int i = 23; i >= 0; i--) {
 
-    if ((data.data >> i) & 1)
-      dst->item(MARK, ONE);
-    else
-      dst->item(MARK, ZERO);
+  for(int i=23;i>=0;i--) {
+
+    dst->item(
+      BIT_MARK,
+      ((data.data >> i)&1) ? ONE : ZERO
+    );
 
   }
 
-  dst->mark(MARK);
+
+  dst->mark(BIT_MARK);
+
 }
+
 
 
 optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
 
+
   NikaiData out{};
 
-  if (!data.expect_item(START, START))
+
+  if(!data.expect_item(START,4000))
     return {};
 
 
-  uint32_t value = 0;
+  uint32_t value=0;
 
 
-  for (int i = 0; i < 24; i++) {
+  for(int i=0;i<24;i++) {
 
-    if (!data.expect_mark(MARK))
+
+    if(!data.expect_mark(BIT_MARK))
       return {};
 
 
-    if (data.expect_space(ONE)) {
+    if(data.expect_space(ONE)) {
 
-      value = (value << 1) | 1;
+      value=(value<<1)|1;
 
-    } else if (data.expect_space(ZERO)) {
+    }
 
-      value <<= 1;
+    else if(data.expect_space(ZERO)) {
 
-    } else {
+      value=value<<1;
+
+    }
+
+    else {
 
       return {};
 
     }
+
   }
 
 
-  out.data = value;
+  out.data=value;
+
 
   return out;
+
 }
+
 
 
 void NikaiProtocol::dump(const NikaiData &data) {
 
-  ESP_LOGD(TAG, "decoded 0x%06X", data.data);
+  ESP_LOGI(
+    TAG,
+    "Nikai 0x%06X",
+    data.data
+  );
 
 }
 
 
-}
-}
+} // namespace remote_base
+} // namespace esphome
