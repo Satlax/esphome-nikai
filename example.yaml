@@ -1,0 +1,175 @@
+esphome:
+  name: ir-converter
+
+external_components:
+  - source:
+      type: local
+      path: components
+
+
+esp8266:
+  board: esp01_1m
+
+
+logger:
+  level: DEBUG
+
+
+api:
+
+
+ota:
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+
+
+remote_receiver:
+
+  pin:
+    number: GPIO5
+    mode: INPUT_PULLUP
+
+  dump:
+    - nec
+
+  idle: 50ms
+
+
+
+  on_nec:
+
+    then:
+
+      - lambda: |-
+
+          if (x.address == 0x5EA1 &&
+              x.command == 0x58) {
+
+              id(yamaha_vol_up).execute();
+
+          }
+
+
+          if (x.address == 0x5EA1 &&
+              x.command == 0xD8) {
+
+              id(yamaha_vol_down).execute();
+
+          }
+
+
+          if (x.address == 0x5EA1 &&
+              x.command == 0x6A) {
+
+              id(yamaha_straight).execute();
+
+          }
+
+
+          if (x.address == 0x7E81 &&
+              x.command == 0x54) {
+
+              id(yamaha_power).execute();
+
+          }
+
+
+
+  on_raw:
+
+    then:
+
+      - lambda: |-
+
+          // NIKAI VOL+
+          if (x.data == 0xD0F2F) {
+
+             id(yamaha_vol_up).execute();
+
+          }
+
+
+          // NIKAI VOL-
+          if (x.data == 0xD1F2E) {
+
+             id(yamaha_vol_down).execute();
+
+          }
+
+
+          // STRAIGHT (ivi)
+          if (x.data == 0x7BF84) {
+
+             id(yamaha_straight).execute();
+
+          }
+
+
+          // POWER (wink)
+          if (x.data == 0xB1F4E) {
+
+             id(yamaha_power).execute();
+
+          }
+
+
+
+remote_transmitter:
+
+  pin: GPIO14
+
+  carrier_duty_percent: 50%
+
+
+
+script:
+
+- id: yamaha_vol_up
+
+  then:
+
+    - remote_transmitter.transmit_nec:
+
+        address: 0x5EA1
+
+        command: 0x58
+
+
+
+- id: yamaha_vol_down
+
+  then:
+
+    - remote_transmitter.transmit_nec:
+
+        address: 0x5EA1
+
+        command: 0xD8
+
+
+
+- id: yamaha_straight
+
+  then:
+
+    - remote_transmitter.transmit_nec:
+
+        address: 0x5EA1
+
+        command: 0x6A
+
+
+
+- id: yamaha_power
+
+  then:
+
+    - remote_transmitter.transmit_nec:
+
+        address: 0x7E81
+
+        command: 0x54
