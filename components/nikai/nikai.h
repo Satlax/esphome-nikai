@@ -1,27 +1,22 @@
 #pragma once
 
-#include "esphome/core/component.h"
-#include "esphome/components/remote_receiver/remote_receiver.h"
+#include "esphome/components/remote_base/remote_base.h"
 
 namespace esphome {
-namespace nikai {
+namespace remote_base {
 
-
-class NikaiReceiver : public Component {
-
- public:
-
-  void setup() override;
-
-  void dump_config() override;
-
-
- private:
-
-  remote_receiver::RemoteReceiverComponent *receiver_;
-
+struct NikaiData {
+  uint32_t data;
 };
 
+class NikaiProtocol : public RemoteProtocol<NikaiData> {
+ public:
+  void encode(RemoteTransmitData *dst, const NikaiData &data) override;
+  optional<NikaiData> decode(RemoteReceiveData data) override;
+  void dump(const NikaiData &data) override;
+};
 
-}
+DECLARE_REMOTE_PROTOCOL(Nikai)
+
+} 
 }
