@@ -1,17 +1,28 @@
 import esphome.codegen as cg
-
-from esphome.components import remote_receiver
-
-
-CODEOWNERS = ["@local"]
-
-DEPENDENCIES = ["remote_receiver"]
-
-
-nikai_ns = cg.esphome_ns.namespace("nikai")
-
-
-NikaiDecoder = nikai_ns.class_(
-    "NikaiDecoder",
-    cg.Component
+import esphome.config_validation as cv
+from esphome.components.remote_base import (
+    declare_protocol,
+    register_trigger,
+    register_action,
+    register_dumper,
+    REMOTE_RECEIVER_TRIGGER_SCHEMA,
 )
+
+DEPENDENCIES = ["remote_base"]
+AUTO_LOAD = ["remote_base"]
+
+nikai_ns = cg.esphome_ns.namespace("esphome::remote_base")
+
+NikaiData     = nikai_ns.struct("NikaiData")
+NikaiTrigger  = nikai_ns.class_("NikaiTrigger")
+NikaiAction   = nikai_ns.class_("NikaiAction")
+NikaiDumper   = nikai_ns.class_("NikaiDumper")
+
+NIKAI_SCHEMA = cv.Schema({
+    cv.Required("data"): cv.hex_uint32_t,
+})
+
+declare_protocol("Nikai")
+register_trigger("nikai", NikaiTrigger, NikaiData)
+register_action("nikai", NikaiAction, NIKAI_SCHEMA)
+register_dumper("nikai", NikaiDumper)
