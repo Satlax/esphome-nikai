@@ -66,15 +66,20 @@ optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
     return out;
   }
   
-  // Попытка 2: Декодирование repeat-кода (без start mark)
+  // Попытка 2: Распознавание repeat-кода (без start mark)
   // Reset data pointer to beginning
   data.reset();
   
-  // Ищем последовательность из 24+ валидных битов NIKAI
-  int valid_bits = 0;
-  size_t start_idx = 0;
+  // Проверяем, что нет start mark (это не полный кадр)
+  int first_mark = abs(data[0]);
+  if (first_mark >= 3000) {
+    // Есть длинный start mark, это не repeat
+    return {};
+  }
   
-  // Сканируем данные, ища начало последовательности битов
+  // Ищем последовательность из 24+ валидных битов NIKAI
+  int valid_pairs = 0;
+  
   for (size_t i = 0; i + 1 < data.size(); i += 2) {
     int mark = abs(data[i]);
     int space = abs(data[i+1]);
@@ -82,51 +87,21 @@ optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
     // Проверяем, похож ли этот pair на бит NIKAI
     if (mark >= 400 && mark <= 700) {
       if ((space >= 800 && space <= 1300) || (space >= 1700 && space <= 2300)) {
-        valid_bits++;
-        if (valid_bits == 1) {
-          start_idx = i;  // Запоминаем начало последовательности
-        }
+        valid_pairs++;
       } else {
-        valid_bits = 0;  // Сбрасываем счетчик
+        valid_pairs = 0;  // Сбрасываем счетчик
       }
     } else {
-      valid_bits = 0;
+      valid_pairs = 0;
     }
     
-    // Если нашли достаточно валидных битов, пытаемся декодировать
-    if (valid_bits >= NIKAI_BITS) {
-      // Пробуем декодировать начиная с start_idx
-      data.reset();
-      data.skip(start_idx);
-      
-      uint32_t wire_value = 0;
-      bool success = true;
-      
-      for (int bit = 0; bit < NIKAI_BITS; bit++) {
-        if (!data.expect_mark(NIKAI_BIT_MARK)) {
-          success = false;
-          break;
-        }
-        
-        if (data.expect_space(NIKAI_ONE_SPACE)) {
-          wire_value |= (1u << bit);
-        } else if (data.expect_space(NIKAI_ZERO_SPACE)) {
-          // bit is 0
-        } else {
-          success = false;
-          break;
-        }
-      }
-      
-      if (success && last_decoded_data != 0) {
-        uint32_t decoded = reverse_bits(wire_value, NIKAI_BITS);
-        // Если декодированные данные совпадают с последней командой, это repeat!
-        if (decoded == last_decoded_data) {
-          out.data = decoded;
-          out.is_repeat = true;
-          ESP_LOGD(TAG, "Detected NIKAI repeat code: data=0x%06" PRIX32, decoded);
-          return out;
-        }
+    // Если нашли достаточно валидных битов, это repeat!
+    if (valid_pairs >= NIKAI_BITS) {
+      if (last_decoded_data != 0) {
+        out.data = last_decoded_data;
+        out.is_repeat = true;
+        ESP_LOGD(TAG, "Detected NIKAI repeat code: data=0x%06" PRIX32, last_decoded_data);
+        return out;
       }
     }
   }
