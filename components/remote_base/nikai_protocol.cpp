@@ -6,11 +6,12 @@ namespace remote_base {
 
 static const char *TAG = "remote.nikai";
 
-// Тайминги на основе реального лога:
-// 4020, -4001, 520, -2004, 520, -2006, 522, -2002...
+// ПРАВИЛЬНЫЕ тайминги на основе лога:
+// 4000, -521, 2004, -525, 2000, -524...
+// Start: 4000 mark + 500 space (НЕ 4000!)
 static const uint32_t NIKAI_FREQ        = 38000;
 static const uint32_t NIKAI_START_MARK  = 4000;
-static const uint32_t NIKAI_START_SPACE = 4000;
+static const uint32_t NIKAI_START_SPACE = 500;     // ← ИСПРАВЛЕНО!
 static const uint32_t NIKAI_BIT_MARK    = 520;
 static const uint32_t NIKAI_ONE_SPACE   = 2000;
 static const uint32_t NIKAI_ZERO_SPACE  = 1000;
@@ -29,7 +30,6 @@ void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
   dst->set_carrier_frequency(NIKAI_FREQ);
   dst->item(NIKAI_START_MARK, NIKAI_START_SPACE);
   
-  // data.data хранится MSB-first, передаём LSB-first
   uint32_t wire_value = reverse_bits(data.data, NIKAI_BITS);
   
   for (int i = 0; i < NIKAI_BITS; i++) {
@@ -44,17 +44,15 @@ void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
 optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
   NikaiData out{};
   
-  // Проверяем start sequence
+  // Start sequence: 4000 mark + 500 space
   if (!data.expect_item(NIKAI_START_MARK, NIKAI_START_SPACE))
     return {};
   
   uint32_t wire_value = 0;
   for (int i = 0; i < NIKAI_BITS; i++) {
-    // Каждый бит начинается с mark
     if (!data.expect_mark(NIKAI_BIT_MARK))
       return {};
     
-    // Определяем бит по длительности space
     if (data.expect_space(NIKAI_ONE_SPACE)) {
       wire_value |= (1u << i);
     } else if (data.expect_space(NIKAI_ZERO_SPACE)) {
@@ -64,7 +62,6 @@ optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
     }
   }
   
-  // Реверсируем биты обратно в MSB-first
   out.data = reverse_bits(wire_value, NIKAI_BITS);
   return out;
 }
