@@ -6,7 +6,10 @@ namespace remote_base {
 
 struct NikaiData {
   uint32_t data;
-  bool operator==(const NikaiData &rhs) const { return data == rhs.data; }
+  bool is_repeat;  // ← ДОБАВЛЕНО: флаг repeat-кода
+  bool operator==(const NikaiData &rhs) const { 
+    return data == rhs.data && is_repeat == rhs.is_repeat; 
+  }
 };
 
 class NikaiProtocol : public RemoteProtocol<NikaiData> {
@@ -26,9 +29,10 @@ class NikaiAction : public RemoteTransmitterActionBase<Ts...> {
   void encode(RemoteTransmitData *dst, Ts... x) override {
     NikaiData d{};
     d.data = this->data_.value(x...);
+    d.is_repeat = false;
     NikaiProtocol().encode(dst, d);
   }
 };
 
 }  // namespace remote_base
-}  // namespace esphome 
+}  // namespace esphome
