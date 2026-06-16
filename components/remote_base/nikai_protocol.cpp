@@ -8,7 +8,7 @@ static const char *TAG = "remote.nikai";
 
 static const uint32_t NIKAI_FREQ        = 38000;
 static const uint32_t NIKAI_START_MARK  = 4000;
-static const uint32_t NIKAI_START_SPACE = 500;
+static const uint32_t NIKAI_START_SPACE = 4000;
 static const uint32_t NIKAI_ONE_MARK    = 2000;
 static const uint32_t NIKAI_ZERO_MARK   = 1000;
 static const uint32_t NIKAI_BIT_SPACE   = 500;
