@@ -8,10 +8,10 @@ static const char *TAG = "remote.nikai";
 
 static const uint32_t NIKAI_FREQ        = 38000;
 static const uint32_t NIKAI_START_MARK  = 4000;
-static const uint32_t NIKAI_START_SPACE = 4000;
-static const uint32_t NIKAI_BIT_MARK    = 500;
-static const uint32_t NIKAI_ONE_SPACE   = 2000;
-static const uint32_t NIKAI_ZERO_SPACE  = 1000;
+static const uint32_t NIKAI_START_SPACE = 500;
+static const uint32_t NIKAI_ONE_MARK    = 2000;
+static const uint32_t NIKAI_ZERO_MARK   = 1000;
+static const uint32_t NIKAI_BIT_SPACE   = 500;
 static const uint8_t  NIKAI_BITS        = 24;
 
 void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
@@ -19,11 +19,10 @@ void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
   dst->item(NIKAI_START_MARK, NIKAI_START_SPACE);
   for (int i = NIKAI_BITS - 1; i >= 0; i--) {
     if ((data.data >> i) & 1)
-      dst->item(NIKAI_BIT_MARK, NIKAI_ONE_SPACE);
+      dst->item(NIKAI_ONE_MARK, NIKAI_BIT_SPACE);
     else
-      dst->item(NIKAI_BIT_MARK, NIKAI_ZERO_SPACE);
+      dst->item(NIKAI_ZERO_MARK, NIKAI_BIT_SPACE);
   }
-  dst->mark(NIKAI_BIT_MARK);
 }
 
 optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
@@ -32,14 +31,13 @@ optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
     return {};
   uint32_t value = 0;
   for (int i = 0; i < NIKAI_BITS; i++) {
-    if (!data.expect_mark(NIKAI_BIT_MARK))
-      return {};
-    if (data.expect_space(NIKAI_ONE_SPACE))
+    if (data.expect_item(NIKAI_ONE_MARK, NIKAI_BIT_SPACE)) {
       value = (value << 1) | 1;
-    else if (data.expect_space(NIKAI_ZERO_SPACE))
+    } else if (data.expect_item(NIKAI_ZERO_MARK, NIKAI_BIT_SPACE)) {
       value = (value << 1);
-    else
+    } else {
       return {};
+    }
   }
   out.data = value;
   return out;
