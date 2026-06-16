@@ -1,4 +1,5 @@
 #pragma once
+
 #include "esphome/components/remote_base/remote_base.h"
 
 namespace esphome {
@@ -6,11 +7,12 @@ namespace remote_base {
 
 struct NikaiData {
   uint32_t data;
-  bool is_repeat;  // ← ДОБАВЛЕНО: флаг repeat-кода
-  bool operator==(const NikaiData &rhs) const { 
-    return data == rhs.data && is_repeat == rhs.is_repeat; 
+
+  bool operator==(const NikaiData &rhs) const {
+    return data == rhs.data;
   }
 };
+
 
 class NikaiProtocol : public RemoteProtocol<NikaiData> {
  public:
@@ -19,20 +21,32 @@ class NikaiProtocol : public RemoteProtocol<NikaiData> {
   void dump(const NikaiData &data) override;
 };
 
+
 DECLARE_REMOTE_PROTOCOL(Nikai)
+
 
 template<typename... Ts>
 class NikaiAction : public RemoteTransmitterActionBase<Ts...> {
+
   TEMPLATABLE_VALUE(uint32_t, data)
+
  public:
-  void set_data(uint32_t data) { data_ = data; }
+
+  void set_data(uint32_t data) {
+    data_ = data;
+  }
+
+
   void encode(RemoteTransmitData *dst, Ts... x) override {
+
     NikaiData d{};
     d.data = this->data_.value(x...);
-    d.is_repeat = false;
+
     NikaiProtocol().encode(dst, d);
   }
+
 };
 
-}  // namespace remote_base
-}  // namespace esphome
+
+}
+}
