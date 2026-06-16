@@ -17,7 +17,7 @@ static const uint8_t  NIKAI_BITS        = 24;
 void NikaiProtocol::encode(RemoteTransmitData *dst, const NikaiData &data) {
   dst->set_carrier_frequency(NIKAI_FREQ);
   dst->item(NIKAI_START_MARK, NIKAI_START_SPACE);
-  for (int i = 0; i < NIKAI_BITS; i++) {
+  for (int i = NIKAI_BITS - 1; i >= 0; i--) {
     if ((data.data >> i) & 1)
       dst->item(NIKAI_ONE_MARK, NIKAI_BIT_SPACE);
     else
@@ -31,10 +31,11 @@ optional<NikaiData> NikaiProtocol::decode(RemoteReceiveData data) {
     return {};
   uint32_t value = 0;
   for (int i = 0; i < NIKAI_BITS; i++) {
+    value <<= 1;
     if (data.expect_item(NIKAI_ONE_MARK, NIKAI_BIT_SPACE)) {
-      value |= (1u << i);
+      value |= 1;
     } else if (data.expect_item(NIKAI_ZERO_MARK, NIKAI_BIT_SPACE)) {
-      // bit stays 0
+      // bit is 0
     } else {
       return {};
     }
