@@ -13,7 +13,6 @@ struct NikaiData {
   }
 };
 
-
 class NikaiProtocol : public RemoteProtocol<NikaiData> {
  public:
   void encode(RemoteTransmitData *dst, const NikaiData &data) override;
@@ -21,13 +20,10 @@ class NikaiProtocol : public RemoteProtocol<NikaiData> {
   void dump(const NikaiData &data) override;
 };
 
-
 DECLARE_REMOTE_PROTOCOL(Nikai)
-
 
 template<typename... Ts>
 class NikaiAction : public RemoteTransmitterActionBase<Ts...> {
-
   TEMPLATABLE_VALUE(uint32_t, data)
 
  public:
@@ -36,17 +32,12 @@ class NikaiAction : public RemoteTransmitterActionBase<Ts...> {
     data_ = data;
   }
 
-
   void encode(RemoteTransmitData *dst, Ts... x) override {
-
     NikaiData d{};
     d.data = this->data_.value(x...);
-
     NikaiProtocol().encode(dst, d);
   }
-
 };
-
 
 }
 }
